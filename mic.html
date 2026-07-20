@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Planner">
+<title>Planner · Voz</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--bg:#f5f4f1;--sur:#fff;--bor:#e2e0d9;--tx:#1c1b18;--tx2:#6b6960;--tx3:#aaa89f;--r:14px}
+html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);font-family:-apple-system,'Inter',sans-serif}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;gap:0}
+
+.card{background:var(--sur);border-radius:28px;padding:40px 32px;width:100%;max-width:320px;text-align:center;border:1px solid var(--bor);display:flex;flex-direction:column;align-items:center;gap:24px}
+
+.logo{font-size:13px;font-weight:600;color:var(--tx3);letter-spacing:.05em;text-transform:uppercase}
+
+.mic-wrap{position:relative;width:120px;height:120px}
+.mic-ring{position:absolute;inset:0;border-radius:50%;border:2px solid #e2e0d9;transition:all .2s}
+.mic-ring.active{border-color:#ef4444;animation:ring 1.2s ease-in-out infinite}
+.mic-btn{width:120px;height:120px;border-radius:50%;border:none;background:#1c1b18;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:44px;transition:transform .15s,background .2s;position:relative;z-index:1;-webkit-touch-callout:none}
+.mic-btn:active{transform:scale(.93)}
+.mic-btn.active{background:#ef4444}
+.mic-btn.success{background:#22c55e}
+
+.status{font-size:15px;font-weight:500;color:var(--tx);min-height:24px;transition:all .2s}
+.status.muted{color:var(--tx3);font-weight:400}
+.status.error{color:#ef4444}
+.status.ok{color:#22c55e}
+
+.transcript-box{background:var(--bg);border-radius:var(--r);padding:14px 16px;width:100%;min-height:64px;display:flex;align-items:center;justify-content:center;border:1px solid var(--bor);transition:border-color .2s}
+.transcript-box.active{border-color:#ef4444}
+.transcript-box.success{border-color:#22c55e}
+.transcript{font-size:15px;color:var(--tx);line-height:1.5;text-align:center;font-style:italic}
+.transcript.empty{color:var(--tx3);font-style:normal;font-size:13px}
+
+.count-wrap{display:flex;align-items:center;gap:8px}
+.count-label{font-size:12px;color:var(--tx3)}
+.count-num{font-size:13px;font-weight:600;color:var(--tx);background:var(--bg);border:1px solid var(--bor);padding:2px 10px;border-radius:20px}
+
+.recent{width:100%;display:flex;flex-direction:column;gap:6px}
+.recent-title{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--tx3);text-align:left}
+.recent-item{background:var(--bg);border-radius:10px;padding:9px 12px;font-size:13px;color:var(--tx2);text-align:left;border:1px solid var(--bor);display:flex;align-items:center;gap:8px}
+.recent-dot{width:6px;height:6px;border-radius:50%;background:var(--tx3);flex-shrink:0}
+
+.open-btn{width:100%;padding:12px;border-radius:var(--r);border:1px solid var(--bor);background:var(--sur);color:var(--tx2);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:background .1s}
+.open-btn:active{background:var(--bg)}
+
+@keyframes ring{0%,100%{transform:scale(1);opacity:.6}50%{transform:scale(1.12);opacity:1}}
+@keyframes pop{0%{transform:scale(.8);opacity:0}60%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
+.pop{animation:pop .3s ease forwards}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">Planner · Tomas</div>
+
+  <div class="mic-wrap">
+    <div class="mic-ring" id="mic-ring"></div>
+    <button class="mic-btn" id="mic-btn" onclick="toggle()">🎤</button>
+  </div>
+
+  <div class="status muted" id="status">Tocá para dictar</div>
+
+  <div class="transcript-box" id="transcript-box">
+    <div class="transcript empty" id="transcript">Tu tarea aparece acá...</div>
+  </div>
+
+  <div class="count-wrap">
+    <span class="count-label">Tareas en backlog:</span>
+    <span class="count-num" id="count">0</span>
+  </div>
+
+  <div class="recent" id="recent" style="display:none">
+    <div class="recent-title">Últimas agregadas</div>
+    <div id="recent-list"></div>
+  </div>
+
+  <button class="open-btn" onclick="openPlanner()">Abrir planner completo →</button>
+</div>
+
+<script>
+var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+var rec = null;
+var active = false;
+var STORAGE_KEY = 'planner_v5';
+
+function loadData(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)); }catch(e){ return null; }
+}
+
+function saveTask(name){
+  var D = loadData();
+  if(!D){ D = {areas:[],backlog:[],matrix:[],week:{},pomoDone:0,nid:1}; }
+  if(!D.nid) D.nid = Date.now();
+  D.backlog.push({id:'i'+(D.nid++), name:name, aid:null, sid:null, done:false});
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(D));
+}
+
+function getBacklogCount(){
+  var D = loadData();
+  return D && D.backlog ? D.backlog.filter(function(t){return !t.done;}).length : 0;
+}
+
+function getRecent(){
+  var D = loadData();
+  if(!D || !D.backlog) return [];
+  return D.backlog.filter(function(t){return !t.done;}).slice(-3).reverse();
+}
+
+function updateUI(){
+  document.getElementById('count').textContent = getBacklogCount();
+  var recent = getRecent();
+  var rWrap = document.getElementById('recent');
+  var rList = document.getElementById('recent-list');
+  if(recent.length){
+    rWrap.style.display = 'flex';
+    rList.innerHTML = recent.map(function(t){
+      return '<div class="recent-item"><div class="recent-dot"></div>'+esc(t.name)+'</div>';
+    }).join('');
+  } else {
+    rWrap.style.display = 'none';
+  }
+}
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function setStatus(txt, cls){
+  var el = document.getElementById('status');
+  el.textContent = txt;
+  el.className = 'status' + (cls ? ' '+cls : '');
+}
+
+function setTranscript(txt, cls){
+  var box = document.getElementById('transcript-box');
+  var el = document.getElementById('transcript');
+  if(txt){
+    el.textContent = txt;
+    el.className = 'transcript';
+  } else {
+    el.textContent = 'Tu tarea aparece acá...';
+    el.className = 'transcript empty';
+  }
+  box.className = 'transcript-box' + (cls ? ' '+cls : '');
+}
+
+function toggle(){
+  if(!SR){
+    setStatus('Tu browser no soporta dictado', 'error');
+    return;
+  }
+  if(active){ stop(); return; }
+  start();
+}
+
+function start(){
+  rec = new SR();
+  rec.lang = 'es-AR';
+  rec.continuous = false;
+  rec.interimResults = true;
+  rec.maxAlternatives = 1;
+
+  rec.onstart = function(){
+    active = true;
+    document.getElementById('mic-btn').classList.add('active');
+    document.getElementById('mic-btn').textContent = '⏹';
+    document.getElementById('mic-ring').classList.add('active');
+    setStatus('Escuchando...', '');
+    setTranscript('', 'active');
+  };
+
+  rec.onresult = function(e){
+    var interim = '', final = '';
+    for(var i = e.resultIndex; i < e.results.length; i++){
+      var t = e.results[i][0].transcript;
+      if(e.results[i].isFinal) final += t;
+      else interim += t;
+    }
+    setTranscript(final || interim, 'active');
+  };
+
+  rec.onend = function(){
+    active = false;
+    document.getElementById('mic-btn').classList.remove('active');
+    document.getElementById('mic-ring').classList.remove('active');
+
+    var txt = document.getElementById('transcript').textContent;
+    var isEmpty = document.getElementById('transcript').classList.contains('empty');
+
+    if(!isEmpty && txt && txt !== 'Tu tarea aparece acá...'){
+      saveTask(txt);
+      document.getElementById('mic-btn').classList.add('success');
+      document.getElementById('mic-btn').textContent = '✓';
+      setStatus('¡Tarea agregada!', 'ok');
+      setTranscript(txt, 'success');
+      updateUI();
+      setTimeout(function(){
+        document.getElementById('mic-btn').classList.remove('success');
+        document.getElementById('mic-btn').textContent = '🎤';
+        setStatus('Tocá para dictar', 'muted');
+        setTranscript('', '');
+      }, 2000);
+    } else {
+      document.getElementById('mic-btn').textContent = '🎤';
+      setStatus('No se escuchó nada. Intentá de nuevo.', 'muted');
+    }
+  };
+
+  rec.onerror = function(e){
+    active = false;
+    document.getElementById('mic-btn').classList.remove('active');
+    document.getElementById('mic-btn').textContent = '🎤';
+    document.getElementById('mic-ring').classList.remove('active');
+    if(e.error === 'not-allowed'){
+      setStatus('Permiso denegado — habilitá el micrófono en Ajustes', 'error');
+    } else if(e.error === 'no-speech'){
+      setStatus('No se detectó audio. Intentá de nuevo.', 'muted');
+    } else {
+      setStatus('Error: ' + e.error, 'error');
+    }
+    setTranscript('', '');
+  };
+
+  rec.start();
+}
+
+function stop(){
+  if(rec) rec.stop();
+}
+
+function openPlanner(){
+  window.location.href = 'index.html';
+}
+
+updateUI();
+</script>
+</body>
+</html>

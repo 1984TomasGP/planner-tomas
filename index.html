@@ -353,6 +353,48 @@ main{max-width:1200px;margin:0 auto;padding:22px 24px}
 <div class="toast" id="toast"></div>
 
 <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, orderBy, query, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const cfg = {
+  apiKey: "AIzaSyDzdSZmQJ-dw_Ddee1RVeYS7xgeOYmC0Rk",
+  authDomain: "planner-tomas.firebaseapp.com",
+  projectId: "planner-tomas",
+  storageBucket: "planner-tomas.firebasestorage.app",
+  messagingSenderId: "260528369021",
+  appId: "1:260528369021:web:1c041a8aafe8dfbb687014"
+};
+const app = initializeApp(cfg);
+const db = getFirestore(app);
+
+function fbListen() {
+  const q = query(collection(db, "backlog"), orderBy("createdAt", "asc"));
+  onSnapshot(q, function(snap) {
+    snap.docChanges().forEach(function(change) {
+      if (change.type !== "added") return;
+      var data = change.doc.data();
+      if (!window.D) return;
+      var exists = window.D.backlog.find(function(t) { return t.fbId === change.doc.id; });
+      if (!exists) {
+        window.D.backlog.push({
+          id: 'i'+(window.D.nid++),
+          fbId: change.doc.id,
+          name: data.name,
+          aid: null, sid: null, done: false
+        });
+        try { localStorage.setItem('planner_v5', JSON.stringify(window.D)); } catch(e) {}
+        if (document.getElementById('v-bl').classList.contains('on')) window.blRender();
+        window.toast('Nueva tarea desde el móvil: ' + data.name);
+      }
+    });
+  });
+}
+
+// Esperar a que el script principal cargue
+window._fbReady = fbListen;
+</script>
+
+<script>
 var COLS=['#3b82f6','#22c55e','#f59e0b','#ef4444','#a855f7','#ec4899','#14b8a6','#f97316','#6366f1','#84cc16'];
 var CIRC=2*Math.PI*78;
 var SM=[{l:'10:00–10:25',s:'10:00'},{l:'10:30–10:55',s:'10:30'},{l:'11:25–11:50',s:'11:25'},{l:'11:55–12:20',s:'11:55'},{l:'12:25–12:50',s:'12:25'},{l:'12:55–13:20',s:'12:55'}];
@@ -876,54 +918,14 @@ function micStop(){
   if(micRec){ micRec.stop(); }
 }
 
-
-// FIREBASE SYNC
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-const _fbConfig = {
-  apiKey: "AIzaSyDzdSZmQJ-dw_Ddee1RVeYS7xgeOYmC0Rk",
-  authDomain: "planner-tomas.firebaseapp.com",
-  projectId: "planner-tomas",
-  storageBucket: "planner-tomas.firebasestorage.app",
-  messagingSenderId: "260528369021",
-  appId: "1:260528369021:web:1c041a8aafe8dfbb687014"
-};
-const _fbApp = initializeApp(_fbConfig);
-const _db = getFirestore(_fbApp);
-
-// Escuchar cambios en tiempo real del backlog de Firebase
-function fbListen() {
-  const q = query(collection(_db, "backlog"), orderBy("createdAt", "asc"));
-  onSnapshot(q, function(snap) {
-    snap.docChanges().forEach(function(change) {
-      if (change.type === "added") {
-        var data = change.doc.data();
-        // Solo agregar si no existe ya en el backlog local
-        var exists = D.backlog.find(function(t) { return t.fbId === change.doc.id; });
-        if (!exists) {
-          D.backlog.push({
-            id: uid(),
-            fbId: change.doc.id,
-            name: data.name,
-            aid: data.aid || null,
-            sid: data.sid || null,
-            done: data.done || false
-          });
-          save();
-          // Si estamos en la vista backlog, re-renderizar
-          if (document.getElementById('v-bl').classList.contains('on')) blRender();
-          // Mostrar notificación
-          toast('Nueva tarea desde el móvil: ' + data.name);
-        }
-      }
-    });
-  });
-}
-
 // INIT
 load();
-fbListen();
+// Exponer funciones para Firebase module
+window.D = D;
+window.blRender = blRender;
+window.toast = toast;
+if(window._fbReady) window._fbReady();
+if(window._fbReady) window._fbReady();
 var _d=new Date();
 var _days=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 document.getElementById('dchip').textContent=_days[_d.getDay()]+' '+_d.getDate()+' '+MO[_d.getMonth()];

@@ -373,24 +373,38 @@ function fbListen() {
     snap.docChanges().forEach(function(change) {
       if (change.type !== "added") return;
       var data = change.doc.data();
-      if (!window.D) return;
-      var exists = window.D.backlog.find(function(t) { return t.fbId === change.doc.id; });
-      if (!exists) {
-        window.D.backlog.push({
-          id: 'i'+(window.D.nid++),
-          fbId: change.doc.id,
-          name: data.name,
-          aid: null, sid: null, done: false
-        });
-        try { localStorage.setItem('planner_v5', JSON.stringify(window.D)); } catch(e) {}
-        if (document.getElementById('v-bl').classList.contains('on')) window.blRender();
-        window.toast('Nueva tarea desde el móvil: ' + data.name);
+      // Esperar hasta que window.D esté disponible
+      function tryAdd() {
+        if (!window.D) { setTimeout(tryAdd, 100); return; }
+        var exists = window.D.backlog.find(function(t) { return t.fbId === change.doc.id; });
+        if (!exists) {
+          window.D.backlog.push({
+            id: 'i'+(window.D.nid++),
+            fbId: change.doc.id,
+            name: data.name,
+            aid: null, sid: null, done: false
+          });
+          try { localStorage.setItem('planner_v5', JSON.stringify(window.D)); } catch(e) {}
+          // Esperar a que blRender y toast estén disponibles
+          function tryRender() {
+            if (!window.blRender || !window.toast) { setTimeout(tryRender, 100); return; }
+            if (document.getElementById('v-bl').classList.contains('on')) window.blRender();
+            window.toast('Nueva tarea desde el móvil: ' + data.name);
+          }
+          tryRender();
+        }
       }
+      tryAdd();
     });
   });
 }
 
-// Esperar a que el script principal cargue
+// Iniciar listener cuando el DOM esté listo
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', fbListen);
+} else {
+  fbListen();
+}
 window._fbReady = fbListen;
 </script>
 

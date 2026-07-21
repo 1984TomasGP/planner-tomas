@@ -167,8 +167,7 @@ main{max-width:1200px;margin:0 auto;padding:22px 24px}
 <header>
   <div class="logo">Planner <span>· Tomas</span></div>
   <nav>
-    <button class="nb" onclick="go('bl')">Backlog</button>
-    <button class="nb on" onclick="go('mx')">Matriz</button>
+    <button class="nb on" onclick="go('mx')">Backlog & Matriz</button>
     <button class="nb" onclick="go('wk')">Semana</button>
     <button class="nb" onclick="go('pm')">Pomodoro</button>
     <button class="nb" onclick="go('dy')">Mi día</button>
@@ -181,63 +180,67 @@ main{max-width:1200px;margin:0 auto;padding:22px 24px}
 </header>
 <main>
 
-<div id="v-bl" class="view">
-  <div class="bl-bar">
-    <input type="text" id="bl-in" placeholder="Escribí o dictá una tarea...">
+<div id="v-mx" class="view on">
+  <!-- BARRA SUPERIOR -->
+  <div class="bl-bar" style="margin-bottom:14px">
+    <input type="text" id="bl-in" placeholder="Nueva tarea al backlog...">
     <button class="btn" id="mic-btn" onclick="micToggle()" title="Dictado por voz">&#127908;</button>
-    <button class="btn btn-dk" onclick="blAdd()">+ Agregar</button>
+    <button class="btn btn-dk" onclick="blAdd()">+ Backlog</button>
+    <div style="width:1px;background:var(--bor);margin:0 4px"></div>
+    <input type="text" id="mx-in" class="fi" placeholder="Directa a la matriz..." style="flex:1;min-width:120px">
+    <select id="mx-q" class="fi" style="min-width:50px">
+      <option value="q1">Q1</option>
+      <option value="q2">Q2</option>
+      <option value="q3">Q3</option>
+      <option value="q4">Q4</option>
+    </select>
+    <select id="mx-p" class="fi" style="min-width:80px">
+      <option value="1">1 🍅</option>
+      <option value="2" selected>2 🍅</option>
+      <option value="3">3 🍅</option>
+      <option value="4">4 🍅</option>
+    </select>
+    <button class="btn btn-dk" onclick="mxAdd()">+ Matriz</button>
   </div>
-  <div id="mic-status" style="display:none;font-size:12px;color:#ef4444;padding:4px 2px;display:flex;align-items:center;gap:6px;margin-bottom:8px">
-    <span id="mic-dot" style="width:8px;height:8px;border-radius:50%;background:#ef4444;animation:pulse 1s infinite"></span>
+  <div id="mic-status" style="display:none;font-size:12px;color:#ef4444;padding:4px 2px;align-items:center;gap:6px;margin-bottom:8px">
+    <span style="width:8px;height:8px;border-radius:50%;background:#ef4444;animation:pulse 1s infinite;display:inline-block"></span>
     <span id="mic-txt">Escuchando...</span>
   </div>
-  <div class="bl-lay">
-    <div style="display:flex;flex-direction:column;gap:12px">
+
+  <!-- LAYOUT COMBINADO -->
+  <div style="display:grid;grid-template-columns:280px 1fr;gap:14px;align-items:start">
+
+    <!-- BACKLOG IZQUIERDA -->
+    <div style="display:flex;flex-direction:column;gap:10px">
       <div class="panel">
-        <div class="ptitle">Sin asignar — arrastrá a una carpeta <span id="bl-cnt"></span></div>
+        <div class="ptitle">Sin asignar <span id="bl-cnt"></span></div>
+        <div style="font-size:11px;color:var(--tx3);margin-bottom:8px">Arrastrá al cuadrante →</div>
         <div class="idrop" id="bl-inbox"></div>
       </div>
       <div id="bl-asgn"></div>
+      <div id="bl-folders"></div>
     </div>
-    <div id="bl-folders"></div>
-  </div>
-</div>
 
-<div id="v-mx" class="view on">
-  <div class="mx-bar">
-    <input type="text" id="mx-in" class="fi" placeholder="Tarea directa a la matriz...">
-    <select id="mx-q" class="fi" style="flex:1;min-width:130px">
-      <option value="q1">Q1 — Urgente e importante</option>
-      <option value="q2">Q2 — Importante, no urgente</option>
-      <option value="q3">Q3 — Urgente, no importante</option>
-      <option value="q4">Q4 — Ni urgente ni importante</option>
-    </select>
-    <select id="mx-p" class="fi" style="min-width:110px">
-      <option value="1">1 pomodoro</option>
-      <option value="2" selected>2 pomodoros</option>
-      <option value="3">3 pomodoros</option>
-      <option value="4">4 pomodoros</option>
-    </select>
-    <input type="time" id="mx-t" value="14:00" class="fi" style="width:110px">
-    <button class="btn btn-dk" onclick="mxAdd()">+ Agregar</button>
-  </div>
-  <div class="mx-grid">
-    <div class="quad" id="quad-q1" style="border-top:3px solid #ef4444">
-      <div class="qhd"><div class="qdot" style="background:#ef4444"></div><div style="flex:1"><div class="qtit" style="color:#991b1b">Hacer ahora</div><div class="qsub">Urgente e importante</div></div><span class="qbdg" style="background:#fef2f2;color:#991b1b">Q1</span></div>
-      <div id="q1"></div>
+    <!-- MATRIZ DERECHA -->
+    <div class="mx-grid">
+      <div class="quad" id="quad-q1" style="border-top:3px solid #ef4444">
+        <div class="qhd"><div class="qdot" style="background:#ef4444"></div><div style="flex:1"><div class="qtit" style="color:#991b1b">Hacer ahora</div><div class="qsub">Urgente e importante</div></div><span class="qbdg" style="background:#fef2f2;color:#991b1b">Q1</span></div>
+        <div id="q1"></div>
+      </div>
+      <div class="quad" id="quad-q2" style="border-top:3px solid #3b82f6">
+        <div class="qhd"><div class="qdot" style="background:#3b82f6"></div><div style="flex:1"><div class="qtit" style="color:#1e3a8a">Planificar</div><div class="qsub">Importante, no urgente</div></div><span class="qbdg" style="background:#eff6ff;color:#1e3a8a">Q2</span></div>
+        <div id="q2"></div>
+      </div>
+      <div class="quad" id="quad-q3" style="border-top:3px solid #f59e0b">
+        <div class="qhd"><div class="qdot" style="background:#f59e0b"></div><div style="flex:1"><div class="qtit" style="color:#78350f">Delegar</div><div class="qsub">Urgente, no importante</div></div><span class="qbdg" style="background:#fffbeb;color:#78350f">Q3</span></div>
+        <div id="q3"></div>
+      </div>
+      <div class="quad" id="quad-q4" style="border-top:3px solid #9ca3af">
+        <div class="qhd"><div class="qdot" style="background:#9ca3af"></div><div style="flex:1"><div class="qtit" style="color:#374151">Eliminar</div><div class="qsub">Ni urgente ni importante</div></div><span class="qbdg" style="background:#f9fafb;color:#374151">Q4</span></div>
+        <div id="q4"></div>
+      </div>
     </div>
-    <div class="quad" id="quad-q2" style="border-top:3px solid #3b82f6">
-      <div class="qhd"><div class="qdot" style="background:#3b82f6"></div><div style="flex:1"><div class="qtit" style="color:#1e3a8a">Planificar</div><div class="qsub">Importante, no urgente</div></div><span class="qbdg" style="background:#eff6ff;color:#1e3a8a">Q2</span></div>
-      <div id="q2"></div>
-    </div>
-    <div class="quad" id="quad-q3" style="border-top:3px solid #f59e0b">
-      <div class="qhd"><div class="qdot" style="background:#f59e0b"></div><div style="flex:1"><div class="qtit" style="color:#78350f">Delegar</div><div class="qsub">Urgente, no importante</div></div><span class="qbdg" style="background:#fffbeb;color:#78350f">Q3</span></div>
-      <div id="q3"></div>
-    </div>
-    <div class="quad" id="quad-q4" style="border-top:3px solid #9ca3af">
-      <div class="qhd"><div class="qdot" style="background:#9ca3af"></div><div style="flex:1"><div class="qtit" style="color:#374151">Eliminar</div><div class="qsub">Ni urgente ni importante</div></div><span class="qbdg" style="background:#f9fafb;color:#374151">Q4</span></div>
-      <div id="q4"></div>
-    </div>
+
   </div>
 </div>
 
@@ -389,7 +392,7 @@ function fbListen() {
           // Esperar a que blRender y toast estén disponibles
           function tryRender() {
             if (!window.blRender || !window.toast) { setTimeout(tryRender, 100); return; }
-            if (document.getElementById('v-bl').classList.contains('on')) window.blRender();
+            if (document.getElementById('v-mx').classList.contains('on')) window.blRender();
             window.toast('Nueva tarea desde el móvil: ' + data.name);
           }
           tryRender();
@@ -445,10 +448,9 @@ function hRgba(h,a){try{var r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),
 
 // NAV
 function go(v){
-  ['bl','mx','wk','pm','dy','st'].forEach(function(x){document.getElementById('v-'+x).classList.toggle('on',x===v);});
-  document.querySelectorAll('.nb').forEach(function(b,i){b.classList.toggle('on',['bl','mx','wk','pm','dy','st'][i]===v);});
-  if(v==='bl')blRender();
-  if(v==='mx'){mxRender();bindQuads();}
+  ['mx','wk','pm','dy','st'].forEach(function(x){document.getElementById('v-'+x).classList.toggle('on',x===v);});
+  document.querySelectorAll('.nb').forEach(function(b,i){b.classList.toggle('on',['mx','wk','pm','dy','st'][i]===v);});
+  if(v==='mx'){blRender();mxRender();bindQuads();}
   if(v==='wk')wkRender();
   if(v==='pm'){pmQueue();pmStats();}
   if(v==='dy')dyRender();
@@ -983,7 +985,7 @@ if(window._fbReady) window._fbReady();
 var _d=new Date();
 var _days=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 document.getElementById('dchip').textContent=_days[_d.getDay()]+' '+_d.getDate()+' '+MO[_d.getMonth()];
-mxRender();bindQuads();pmArc();renderPal();
+blRender();mxRender();bindQuads();pmArc();renderPal();
 </script>
 </body>
 </html>

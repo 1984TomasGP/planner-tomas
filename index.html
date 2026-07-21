@@ -56,6 +56,7 @@ main{max-width:1200px;margin:0 auto;padding:22px 24px}
 .fhead.closed+.fbody{display:none}
 .fsc{display:flex;align-items:center;padding:7px 12px 7px 30px;font-size:12px;color:var(--tx2);background:var(--sur2);border-bottom:1px solid var(--bor);min-height:34px}
 .fsc:last-child{border-bottom:none}.fsc.over{background:#dbeafe;outline:2px dashed #3b82f6;outline-offset:-2px}
+.folder-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
 .fscn{flex:1}.fscc{font-size:11px;color:var(--tx3);background:var(--bor);padding:1px 6px;border-radius:20px}
 
 /* MATRIX */
@@ -181,13 +182,14 @@ main{max-width:1200px;margin:0 auto;padding:22px 24px}
 <main>
 
 <div id="v-mx" class="view on">
+
   <!-- BARRA SUPERIOR -->
   <div class="bl-bar" style="margin-bottom:14px">
     <input type="text" id="bl-in" placeholder="Nueva tarea al backlog...">
     <button class="btn" id="mic-btn" onclick="micToggle()" title="Dictado por voz">&#127908;</button>
     <button class="btn btn-dk" onclick="blAdd()">+ Backlog</button>
-    <div style="width:1px;background:var(--bor);margin:0 4px"></div>
-    <input type="text" id="mx-in" class="fi" placeholder="Directa a la matriz..." style="flex:1;min-width:120px">
+    <div style="width:1px;background:var(--bor);margin:0 6px;align-self:stretch"></div>
+    <input type="text" id="mx-in" class="fi" placeholder="Directa a la matriz...">
     <select id="mx-q" class="fi" style="min-width:50px">
       <option value="q1">Q1</option>
       <option value="q2">Q2</option>
@@ -207,41 +209,39 @@ main{max-width:1200px;margin:0 auto;padding:22px 24px}
     <span id="mic-txt">Escuchando...</span>
   </div>
 
-  <!-- LAYOUT COMBINADO -->
-  <div style="display:grid;grid-template-columns:280px 1fr;gap:14px;align-items:start">
-
-    <!-- BACKLOG IZQUIERDA -->
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <div class="panel">
-        <div class="ptitle">Sin asignar <span id="bl-cnt"></span></div>
-        <div style="font-size:11px;color:var(--tx3);margin-bottom:8px">Arrastrá al cuadrante →</div>
-        <div class="idrop" id="bl-inbox"></div>
-      </div>
-      <div id="bl-asgn"></div>
-      <div id="bl-folders"></div>
+  <!-- MATRIZ FULL WIDTH -->
+  <div class="mx-grid" style="margin-bottom:16px">
+    <div class="quad" id="quad-q1" style="border-top:3px solid #ef4444">
+      <div class="qhd"><div class="qdot" style="background:#ef4444"></div><div style="flex:1"><div class="qtit" style="color:#991b1b">Hacer ahora</div><div class="qsub">Urgente e importante</div></div><span class="qbdg" style="background:#fef2f2;color:#991b1b">Q1</span></div>
+      <div id="q1"></div>
     </div>
-
-    <!-- MATRIZ DERECHA -->
-    <div class="mx-grid">
-      <div class="quad" id="quad-q1" style="border-top:3px solid #ef4444">
-        <div class="qhd"><div class="qdot" style="background:#ef4444"></div><div style="flex:1"><div class="qtit" style="color:#991b1b">Hacer ahora</div><div class="qsub">Urgente e importante</div></div><span class="qbdg" style="background:#fef2f2;color:#991b1b">Q1</span></div>
-        <div id="q1"></div>
-      </div>
-      <div class="quad" id="quad-q2" style="border-top:3px solid #3b82f6">
-        <div class="qhd"><div class="qdot" style="background:#3b82f6"></div><div style="flex:1"><div class="qtit" style="color:#1e3a8a">Planificar</div><div class="qsub">Importante, no urgente</div></div><span class="qbdg" style="background:#eff6ff;color:#1e3a8a">Q2</span></div>
-        <div id="q2"></div>
-      </div>
-      <div class="quad" id="quad-q3" style="border-top:3px solid #f59e0b">
-        <div class="qhd"><div class="qdot" style="background:#f59e0b"></div><div style="flex:1"><div class="qtit" style="color:#78350f">Delegar</div><div class="qsub">Urgente, no importante</div></div><span class="qbdg" style="background:#fffbeb;color:#78350f">Q3</span></div>
-        <div id="q3"></div>
-      </div>
-      <div class="quad" id="quad-q4" style="border-top:3px solid #9ca3af">
-        <div class="qhd"><div class="qdot" style="background:#9ca3af"></div><div style="flex:1"><div class="qtit" style="color:#374151">Eliminar</div><div class="qsub">Ni urgente ni importante</div></div><span class="qbdg" style="background:#f9fafb;color:#374151">Q4</span></div>
-        <div id="q4"></div>
-      </div>
+    <div class="quad" id="quad-q2" style="border-top:3px solid #3b82f6">
+      <div class="qhd"><div class="qdot" style="background:#3b82f6"></div><div style="flex:1"><div class="qtit" style="color:#1e3a8a">Planificar</div><div class="qsub">Importante, no urgente</div></div><span class="qbdg" style="background:#eff6ff;color:#1e3a8a">Q2</span></div>
+      <div id="q2"></div>
     </div>
-
+    <div class="quad" id="quad-q3" style="border-top:3px solid #f59e0b">
+      <div class="qhd"><div class="qdot" style="background:#f59e0b"></div><div style="flex:1"><div class="qtit" style="color:#78350f">Delegar</div><div class="qsub">Urgente, no importante</div></div><span class="qbdg" style="background:#fffbeb;color:#78350f">Q3</span></div>
+      <div id="q3"></div>
+    </div>
+    <div class="quad" id="quad-q4" style="border-top:3px solid #9ca3af">
+      <div class="qhd"><div class="qdot" style="background:#9ca3af"></div><div style="flex:1"><div class="qtit" style="color:#374151">Eliminar</div><div class="qsub">Ni urgente ni importante</div></div><span class="qbdg" style="background:#f9fafb;color:#374151">Q4</span></div>
+      <div id="q4"></div>
+    </div>
   </div>
+
+  <!-- SIN ASIGNAR -->
+  <div class="panel" style="margin-bottom:14px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <div class="ptitle" style="margin:0">Sin asignar <span id="bl-cnt"></span></div>
+      <div style="font-size:11px;color:var(--tx3)">— arrastrá a un cuadrante ↑ o a una carpeta ↓</div>
+    </div>
+    <div class="idrop" id="bl-inbox" style="display:flex;flex-wrap:wrap;gap:6px;min-height:40px"></div>
+  </div>
+
+  <!-- CARPETAS EN FILA -->
+  <div id="bl-folders"></div>
+  <div id="bl-asgn" style="display:none"></div>
+
 </div>
 
 <div id="v-wk" class="view">
@@ -487,8 +487,14 @@ function blInbox(){
   document.getElementById('bl-cnt').textContent=inbox.length?'('+inbox.length+')':'';
   var el=document.getElementById('bl-inbox');
   el.innerHTML=inbox.length
-    ?inbox.map(function(t){return cardH(t,null,null);}).join('')
-    :'<div style="font-size:12px;color:var(--tx3);padding:6px 2px">Escribí tareas arriba y arrastralas a las carpetas</div>';
+    ?inbox.map(function(t){
+      return '<div class="card" draggable="true" data-id="'+t.id+'" style="margin-bottom:0;padding:7px 10px">'
+        +'<div class="cdot" style="background:var(--bor2)"></div>'
+        +'<span class="cname" style="font-size:12px">'+esc(t.name)+'</span>'
+        +'<div class="cacts"><button class="dbtn" style="font-size:14px" onclick="event.stopPropagation();blDel(''+t.id+'')">×</button></div>'
+        +'</div>';
+    }).join('')
+    :'<div style="font-size:12px;color:var(--tx3);padding:6px 2px">Dictá o escribí tareas arriba — aparecen acá para asignar</div>';
   bindCards();
 }
 
@@ -521,6 +527,7 @@ function bindCards(){
 
 function blFolders(){
   var el=document.getElementById('bl-folders');
+  el.className='folder-grid';
   el.innerHTML=D.areas.map(function(a){
     var aCnt=D.backlog.filter(function(t){return t.aid===a.id&&!t.done;}).length;
     var gCnt=D.backlog.filter(function(t){return t.aid===a.id&&!t.sid&&!t.done;}).length;

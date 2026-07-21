@@ -603,7 +603,7 @@ function mxRender(){
       } else {
         for(var i=0;i<t.p;i++)pips+='<span class="pip'+(i<t.pd?' dn':'')+'"></span>';
       }
-      return '<div class="mxi'+(t.done?' done':'')+'" onclick="mxToggle(''+t.id+'')">'
+      return '<div class="mxi'+(t.done?' done':'')+'" onclick="mxToggle(\''+t.id+'\')">'
         +'<div class="mchk"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'
         +'<div class="madot" style="background:'+t.ac+'"></div>'
         +'<span class="mname">'+esc(t.name)+'</span>'

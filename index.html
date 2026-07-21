@@ -361,7 +361,7 @@ main{max-width:1400px;margin:0 auto;padding:18px 20px}
 <div class="toast" id="toast"></div>
 
 <script>
-// ── CONSTANTES ────────────────────────────────────────────
+//  CONSTANTES
 var COLS=['#3b82f6','#22c55e','#f59e0b','#ef4444','#a855f7','#ec4899','#14b8a6','#f97316','#6366f1','#84cc16'];
 var CIRC=2*Math.PI*73;
 var SM=[{l:'10:00–10:25',s:'10:00'},{l:'10:30–10:55',s:'10:30'},{l:'11:25–11:50',s:'11:25'},{l:'11:55–12:20',s:'11:55'},{l:'12:25–12:50',s:'12:25'},{l:'12:55–13:20',s:'12:55'}];
@@ -370,7 +370,7 @@ var DNAMES=['Lunes','Martes','Miércoles','Jueves','Viernes'];
 var MO=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 var QC={q1:{dot:'#ef4444',bg:'#fef2f2',tc:'#991b1b'},q2:{dot:'#3b82f6',bg:'#eff6ff',tc:'#1e3a8a'},q3:{dot:'#f59e0b',bg:'#fffbeb',tc:'#78350f'},q4:{dot:'#9ca3af',bg:'#f9fafb',tc:'#374151'}};
 
-// ── ESTADO ────────────────────────────────────────────────
+//  ESTADO
 var D={
   areas:[
     {id:'a1',name:'Trabajo',color:'#3b82f6',scs:[{id:'s1',name:'Colmena'},{id:'s2',name:'Pueblo Cardano'},{id:'s3',name:'Obradormarket'},{id:'s4',name:'Colegio HCP'},{id:'s5',name:'Rancho de los Esteros'}]},
@@ -383,7 +383,7 @@ var D={
 var dragId=null,pendingBl=null,editAreaId=null,selColor=COLS[0];
 var pmTask=null,pmSec=25*60,pmRun=false,pmInt=null,pmBreak=false,pmSess=0;
 
-// ── UTILS ─────────────────────────────────────────────────
+//  UTILS
 function save(){try{localStorage.setItem('planner_v5',JSON.stringify(D));}catch(e){}}
 function load(){try{var x=JSON.parse(localStorage.getItem('planner_v5'));if(x&&x.areas)D=x;}catch(e){}}
 function uid(){return 'i'+(D.nid++);}
@@ -396,7 +396,7 @@ function toast(m){var e=document.getElementById('toast');e.textContent=m;e.class
 function openMod(id){document.getElementById(id).classList.add('on');}
 function closeMod(id){document.getElementById(id).classList.remove('on');}
 
-// ── NAVEGACIÓN ────────────────────────────────────────────
+//  NAVEGACIÓN
 function go(v){
   ['mx','wk','pm','dy','st'].forEach(function(x){
     document.getElementById('v-'+x).classList.toggle('on',x===v);
@@ -409,7 +409,7 @@ function go(v){
   if(v==='st')stRender();
 }
 
-// ── DRAG ──────────────────────────────────────────────────
+//  DRAG
 function startDrag(id){
   dragId=id;
 }
@@ -417,7 +417,7 @@ function endDrag(){
   document.querySelectorAll('.over').forEach(function(x){x.classList.remove('over');});
 }
 
-// ── BACKLOG ───────────────────────────────────────────────
+//  BACKLOG
 function blAdd(){
   var inp=document.getElementById('bl-in');
   var name=inp.value.trim();if(!name)return;
@@ -533,7 +533,7 @@ function blFolders(){
         t.aid=sc.dataset.aid;t.sid=sc.dataset.sid||null;
         var a=ga(sc.dataset.aid);var s=t.sid?gs(t.aid,t.sid):null;
         if(a)D.matrix.forEach(function(m){if(m.bid===t.id)m.ac=a.color;});
-        toast('Asignada a '+(a?a.name:'área')+(s?' › '+s.name:''));
+        toast('Asignada a '+(a?a.name:'área')+(s?' > '+s.name:''));
       }
       dragId=null;save();blRender();
     });
@@ -578,7 +578,7 @@ function blDel(id){
   save();blRender();mxRender();
 }
 
-// ── MATRIZ ────────────────────────────────────────────────
+//  MATRIZ
 function mxAdd(){
   var name=document.getElementById('mx-in').value.trim();
   if(!name)return;
@@ -641,7 +641,7 @@ function mxToggle(id){var t=D.matrix.find(function(x){return x.id===id;});if(t){
 function mxQ(id,q){var t=D.matrix.find(function(x){return x.id===id;});if(t){t.q=q;save();mxRender();}}
 function mxDel(id){D.matrix=D.matrix.filter(function(x){return x.id!==id;});save();mxRender();blRender();}
 
-// ── SEMANA ────────────────────────────────────────────────
+//  SEMANA
 function wkDates(){var now=new Date(),day=now.getDay(),mon=new Date(now);mon.setDate(now.getDate()-(day===0?6:day-1));mon.setHours(0,0,0,0);var dates=[];for(var i=0;i<5;i++){var d=new Date(mon);d.setDate(mon.getDate()+i);dates.push(d);}return dates;}
 function wkKey(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
 function wkIsToday(d){var n=new Date();return d.getFullYear()===n.getFullYear()&&d.getMonth()===n.getMonth()&&d.getDate()===n.getDate();}
@@ -678,31 +678,58 @@ function wkRender(){
   var dates=wkDates();var first=dates[0],last=dates[4];
   document.getElementById('wk-title').textContent='Semana del '+first.getDate()+' al '+last.getDate()+' de '+MO[last.getMonth()];
   var tasks=mxSorted();
+  var taskOpts='<option value="">— Sin asignar —</option>'+tasks.filter(function(t){return !t.done;}).map(function(t){
+    return '<option value="'+t.id+'">'+esc(t.name.length>28?t.name.slice(0,28)+'\u2026':t.name)+'</option>';
+  }).join('');
+
   document.getElementById('wk-grid').innerHTML=dates.map(function(dt,di){
-  var taskOpts='<option value="">— Sin asignar —</option>'+tasks.filter(function(t){return !t.done;}).map(function(t){return '<option value="'+t.id+'">'+esc(t.name.length>28?t.name.slice(0,28)+'…':t.name)+'</option>';}).join('');
     var key=wkKey(dt);var wd=wkDay(key);var isToday=wkIsToday(dt);
-    var turns='<div class="wk-turns"><button class="wk-tb'+(wd.m?' on':'')+'" onclick="wkToggle(\''+key+'\',\'m\')">Mañana</button><button class="wk-tb'+(wd.t?' on':'')+'" onclick="wkToggle(\''+key+'\',\'t\')">Tarde</button></div>';
-    var body='';
-    function slots(arr,slots,turn){
+    var turns='<div class="wk-turns">'
+      +'<button class="wk-tb'+(wd.m?' on':'')+'" onclick="wkToggle(\''+key+'\',\'m\')">Mañana</button>'
+      +'<button class="wk-tb'+(wd.t?' on':'')+'" onclick="wkToggle(\''+key+'\',\'t\')">Tarde</button>'
+      +'</div>';
+
+    function renderSlots(arr,slots,turn){
       var h='';
       for(var s=0;s<6;s++){
-        var tid=arr[s];var task=tid?tasks.find(function(t){return t.id===tid;}):null;
+        var tid=arr[s];
+        var task=tid?tasks.find(function(t){return t.id===tid;}):null;
         var dot=task?QC[task.q].dot:'var(--bor)';
+        var name=task?(task.p===0?'📞 '+task.name:task.name):'Sin asignar';
         var opts=taskOpts.replace('value="'+tid+'"','value="'+tid+'" selected');
-        h+='<div class="wk-slot"><div class="wk-st">'+slots[s].l+'</div>'
-          +'<div class="wk-sb"><div class="wk-sd" style="background:'+dot+'"></div>'
-          +'<span class="wk-sn'+(task?'':' empty')+'">'+esc(task?(task.p===0?'\uD83D\uDCDE '+task.name:task.name):'Sin asignar')+'</span></div>'
+        h+='<div class="wk-slot">'
+          +'<div class="wk-st">'+slots[s].l+'</div>'
+          +'<div class="wk-sb">'
+            +'<div class="wk-sd" style="background:'+dot+'"></div>'
+            +'<span class="wk-sn'+(task?'':' empty')+'">'+esc(name)+'</span>'
+          +'</div>'
           +'<select class="wk-sel" onchange="wkChange(\''+key+'\',\''+turn+'\','+s+',this.value)">'+opts+'</select>'
           +'</div>';
       }
       return h;
     }
-    if(wd.m){body+='<div class="wk-tlbl">Mañana</div>'+slots(wd.ms,SM,'m')+'<button class="wk-exp" onclick="wkExportDay(\''+key+'\',\'m\')">&#128197; Exportar mañana</button>';}
-    if(wd.t){body+='<div class="wk-tlbl"'+(wd.m?' style="margin-top:8px"':'')+'>Tarde</div>'+slots(wd.ts,ST,'t')+'<button class="wk-exp" onclick="wkExportDay(\''+key+'\',\'t\')">&#128197; Exportar tarde</button>';}
-    if(!wd.m&&!wd.t)body='<div class="wk-none">Activá mañana o tarde</div>';
+
+    var body='';
+    if(wd.m){
+      body+='<div class="wk-tlbl">Mañana</div>';
+      body+=renderSlots(wd.ms,SM,'m');
+      body+='<button class="wk-exp" onclick="wkExportDay(\''+key+'\',\'m\')">&#128197; Exportar mañana</button>';
+    }
+    if(wd.t){
+      body+='<div class="wk-tlbl"'+(wd.m?' style="margin-top:8px"':'')+'>Tarde</div>';
+      body+=renderSlots(wd.ts,ST,'t');
+      body+='<button class="wk-exp" onclick="wkExportDay(\''+key+'\',\'t\')">&#128197; Exportar tarde</button>';
+    }
+    if(!wd.m&&!wd.t) body='<div class="wk-none">Activá mañana o tarde</div>';
+
     return '<div class="wk-day'+(isToday?' today':'')+'">'
-      +'<div class="wk-dhd"><div class="wk-dn">'+DNAMES[di]+(isToday?' <span style="font-size:9px;background:#dbeafe;color:#1e40af;padding:1px 5px;border-radius:20px">hoy</span>':'')+'</div><div class="wk-dd">'+dt.getDate()+' '+MO[dt.getMonth()]+'</div>'+turns+'</div>'
-      +'<div class="wk-body">'+body+'</div></div>';
+      +'<div class="wk-dhd">'
+        +'<div class="wk-dn">'+DNAMES[di]+(isToday?' <span style="font-size:9px;background:#dbeafe;color:#1e40af;padding:1px 5px;border-radius:20px">hoy</span>':'')+'</div>'
+        +'<div class="wk-dd">'+dt.getDate()+' '+MO[dt.getMonth()]+'</div>'
+        +turns
+      +'</div>'
+      +'<div class="wk-body">'+body+'</div>'
+      +'</div>';
   }).join('');
 }
 
@@ -765,7 +792,7 @@ function downloadICS(events,filename){
   setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
 }
 
-// ── POMODORO ──────────────────────────────────────────────
+//  POMODORO
 function pmQueue(){
   var el=document.getElementById('pm-q');if(!el)return;
   var pend=mxSorted().filter(function(t){return !t.done;});
@@ -814,7 +841,7 @@ function pmToggle(){
 }
 function pmReset(){clearInterval(pmInt);pmRun=false;pmBreak=false;pmSec=25*60;pmSess=0;document.getElementById('pm-disp').textContent='25:00';document.getElementById('pm-mode').textContent='Foco';document.getElementById('pm-btn').textContent='Iniciar';pmArc();}
 
-// ── MY DAY ────────────────────────────────────────────────
+//  MY DAY
 function dyRender(){
   var sorted=mxSorted();var el=document.getElementById('dy-tl');if(!el)return;
   if(!sorted.length){el.innerHTML='<div style="font-size:13px;color:var(--tx3);padding:20px 0;text-align:center">Agregá tareas en la Matriz</div>';dyStats();return;}
@@ -832,7 +859,7 @@ function dyRender(){
 }
 function dyStats(){var done=D.matrix.filter(function(t){return t.done;}).length;document.getElementById('dy-do').textContent=done+'/'+D.matrix.length;document.getElementById('dy-pm').textContent=D.pomoDone;document.getElementById('dy-mn').textContent=D.pomoDone*25;document.getElementById('dy-pe').textContent=D.matrix.filter(function(t){return !t.done;}).length;}
 
-// ── GOOGLE CALENDAR ───────────────────────────────────────
+//  GOOGLE CALENDAR
 function gcalOpen(t,dt,time){
   var pts=(time||t.time||'14:00').split(':');
   var base=dt||new Date();
@@ -859,7 +886,7 @@ function exportAll(){
   toast('Descargando '+events.length+' eventos — importá el .ics en Google Calendar');
 }
 
-// ── SETTINGS ──────────────────────────────────────────────
+//  SETTINGS
 function stRender(){
   var el=document.getElementById('st-grid');if(!el)return;
   el.innerHTML=D.areas.map(function(a){
@@ -876,7 +903,7 @@ function openScMod(aid){var sel=document.getElementById('mod-sc-a');sel.innerHTM
 function saveSc(){var aid=document.getElementById('mod-sc-a').value;var name=document.getElementById('mod-sc-n').value.trim();if(!name){toast('Escribí un nombre');return;}var a=ga(aid);if(a)a.scs.push({id:uid(),name:name});save();closeMod('mod-sc');stRender();blRender();}
 function delSc(aid,sid){var a=ga(aid);if(!a)return;a.scs=a.scs.filter(function(s){return s.id!==sid;});save();stRender();blRender();}
 
-// ── MICRÓFONO ─────────────────────────────────────────────
+//  MICRÓFONO
 var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 var micRec=null,micActive=false;
 function micToggle(){
@@ -896,7 +923,7 @@ function micToggle(){
 // ── FIREBASE LISTENER (módulo separado) ───────────────────
 // Se carga desde el script type=module de abajo
 
-// ── INIT ──────────────────────────────────────────────────
+//  INIT
 load();
 var _d=new Date();
 var _days=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];

@@ -780,7 +780,15 @@ function downloadICS(events,filename){
   };
   // Obtener timezone del browser (ej: "America/Argentina/Buenos_Aires")
   var tz='America/Argentina/Buenos_Aires';
-  try { tz=Intl.DateTimeFormat().resolvedOptions().timeZone; } catch(e){}
+  try {
+    var browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    // Normalizar timezone de Argentina al formato IANA completo
+    if(browserTz === 'America/Buenos_Aires' || browserTz.indexOf('Argentina') < 0){
+      tz = 'America/Argentina/Buenos_Aires';
+    } else {
+      tz = browserTz;
+    }
+  } catch(e){}
 
   var lines=[
     'BEGIN:VCALENDAR',

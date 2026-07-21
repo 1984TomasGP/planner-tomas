@@ -196,8 +196,9 @@ main{max-width:1400px;margin:0 auto;padding:18px 20px}
       <option value="q4">Q4</option>
     </select>
     <select id="mx-p">
-      <option value="1">1 🍅</option>
-      <option value="2" selected>2 🍅</option>
+      <option value="0">0 🍅 (recordatorio 10 min)</option>
+      <option value="1" selected>1 🍅</option>
+      <option value="2">2 🍅</option>
       <option value="3">3 🍅</option>
       <option value="4">4 🍅</option>
     </select>
@@ -322,7 +323,7 @@ main{max-width:1400px;margin:0 auto;padding:18px 20px}
     <label>Cuadrante</label>
     <select id="mod-q" class="fi"><option value="q1">Q1</option><option value="q2" selected>Q2</option><option value="q3">Q3</option><option value="q4">Q4</option></select>
     <label>Pomodoros</label>
-    <select id="mod-p" class="fi"><option value="1">1 🍅</option><option value="2" selected>2 🍅</option><option value="3">3 🍅</option><option value="4">4 🍅</option></select>
+    <select id="mod-p" class="fi"><option value="0">0 🍅 (recordatorio 10 min)</option><option value="1" selected>1 🍅</option><option value="2">2 🍅</option><option value="3">3 🍅</option><option value="4">4 🍅</option></select>
     <label>Hora</label>
     <input type="time" id="mod-t" value="14:00" class="fi">
     <div class="mbtns">
@@ -596,8 +597,13 @@ function mxRender(){
     var el=document.getElementById(q);if(!el)return;
     if(!list.length){el.innerHTML='<div class="eq">Sin tareas — arrastrá desde el sidebar</div>';return;}
     el.innerHTML=list.map(function(t){
-      var pips='';for(var i=0;i<t.p;i++)pips+='<span class="pip'+(i<t.pd?' dn':'')+'"></span>';
-      return '<div class="mxi'+(t.done?' done':'')+'" onclick="mxToggle(\''+t.id+'\')">'
+      var pips='';
+      if(t.p===0){
+        pips='<span style="font-size:10px;color:#f59e0b;background:#fffbeb;padding:1px 6px;border-radius:20px;white-space:nowrap">&#128222; 10 min</span>';
+      } else {
+        for(var i=0;i<t.p;i++)pips+='<span class="pip'+(i<t.pd?' dn':'')+'"></span>';
+      }
+      return '<div class="mxi'+(t.done?' done':'')+'" onclick="mxToggle(''+t.id+'')">'
         +'<div class="mchk"><svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'
         +'<div class="madot" style="background:'+t.ac+'"></div>'
         +'<span class="mname">'+esc(t.name)+'</span>'
@@ -624,7 +630,7 @@ function bindQuads(){
       if(!t){dragId=null;return;}
       if(D.matrix.some(function(m){return m.bid===t.id;})){toast('Ya está en la matriz');dragId=null;return;}
       var a=t.aid?ga(t.aid):null;
-      D.matrix.push({id:uid(),bid:t.id,name:t.name,q:q,p:2,pd:0,done:false,time:'14:00',ac:a?a.color:'#888'});
+      D.matrix.push({id:uid(),bid:t.id,name:t.name,q:q,p:1,pd:0,done:false,time:'14:00',ac:a?a.color:'#888'});
       dragId=null;save();mxRender();blRender();
       toast('Agregada a '+q.toUpperCase());
     });
@@ -643,7 +649,7 @@ function wkDay(key){if(!D.week[key])D.week[key]={m:false,t:false,ms:['','','',''
 
 function wkPropose(){
   var dates=wkDates();
-  var pool=[];mxSorted().filter(function(t){return !t.done;}).forEach(function(t){var p=t.p-t.pd;for(var i=0;i<p;i++)pool.push(t.id);});
+  var pool=[];mxSorted().filter(function(t){return !t.done;}).forEach(function(t){var p=t.p===0?1:t.p-t.pd;for(var i=0;i<p;i++)pool.push(t.id);});
   var idx=0;
   dates.forEach(function(dt){
     var key=wkKey(dt);var wd=wkDay(key);
@@ -657,7 +663,7 @@ function wkPropose(){
 function wkToggle(key,turn){
   var wd=wkDay(key);wd[turn]=!wd[turn];
   if(wd[turn]){
-    var pool=[];mxSorted().filter(function(t){return !t.done;}).forEach(function(t){var p=t.p-t.pd;for(var i=0;i<p;i++)pool.push(t.id);});
+    var pool=[];mxSorted().filter(function(t){return !t.done;}).forEach(function(t){var p=t.p===0?1:t.p-t.pd;for(var i=0;i<p;i++)pool.push(t.id);});
     var used={};Object.keys(D.week).forEach(function(k){var w=D.week[k];['ms','ts'].forEach(function(a){(w[a]||[]).forEach(function(tid){if(tid)used[tid]=(used[tid]||0)+1;});});});
     var arr=turn==='m'?'ms':'ts';wd[arr]=['','','','','',''];
     var slot=0,pi=0;
@@ -672,8 +678,8 @@ function wkRender(){
   var dates=wkDates();var first=dates[0],last=dates[4];
   document.getElementById('wk-title').textContent='Semana del '+first.getDate()+' al '+last.getDate()+' de '+MO[last.getMonth()];
   var tasks=mxSorted();
-  var taskOpts='<option value="">— Sin asignar —</option>'+tasks.filter(function(t){return !t.done;}).map(function(t){return '<option value="'+t.id+'">'+esc(t.name.length>28?t.name.slice(0,28)+'…':t.name)+'</option>';}).join('');
   document.getElementById('wk-grid').innerHTML=dates.map(function(dt,di){
+  var taskOpts='<option value="">— Sin asignar —</option>'+tasks.filter(function(t){return !t.done;}).map(function(t){return '<option value="'+t.id+'">'+esc(t.name.length>28?t.name.slice(0,28)+'…':t.name)+'</option>';}).join('');
     var key=wkKey(dt);var wd=wkDay(key);var isToday=wkIsToday(dt);
     var turns='<div class="wk-turns"><button class="wk-tb'+(wd.m?' on':'')+'" onclick="wkToggle(\''+key+'\',\'m\')">Mañana</button><button class="wk-tb'+(wd.t?' on':'')+'" onclick="wkToggle(\''+key+'\',\'t\')">Tarde</button></div>';
     var body='';
@@ -685,7 +691,7 @@ function wkRender(){
         var opts=taskOpts.replace('value="'+tid+'"','value="'+tid+'" selected');
         h+='<div class="wk-slot"><div class="wk-st">'+slots[s].l+'</div>'
           +'<div class="wk-sb"><div class="wk-sd" style="background:'+dot+'"></div>'
-          +'<span class="wk-sn'+(task?'':' empty')+'">'+esc(task?task.name:'Sin asignar')+'</span></div>'
+          +'<span class="wk-sn'+(task?'':' empty')+'">'+esc(task?(task.p===0?'\uD83D\uDCDE '+task.name:task.name):'Sin asignar')+'</span></div>'
           +'<select class="wk-sel" onchange="wkChange(\''+key+'\',\''+turn+'\','+s+',this.value)">'+opts+'</select>'
           +'</div>';
       }
@@ -703,39 +709,60 @@ function wkRender(){
 function wkExportDay(key,turn){
   var wd=D.week[key];if(!wd)return;
   var arr=turn==='m'?'ms':'ts';var slots=turn==='m'?SM:ST;
-  var tasks=mxSorted();var dt=new Date(key+'T12:00:00');var n=0;
+  var tasks=mxSorted();var dt=new Date(key+'T12:00:00');
+  var events=[];
   (wd[arr]||[]).forEach(function(tid,i){
     if(!tid)return;var t=tasks.find(function(x){return x.id===tid;});if(!t)return;
-    setTimeout(function(){
-      var pts=slots[i].s.split(':');
-      var start=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate(),+pts[0],+pts[1]);
-      var end=new Date(start.getTime()+25*60000);
-      var fmt=function(d){return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'T'+pad(d.getHours())+pad(d.getMinutes())+'00';};
-      window.open('https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent('['+t.q.toUpperCase()+'] '+t.name+' 🍅')+'&dates='+fmt(start)+'/'+fmt(end),'_blank');
-    },n*600);n++;
+    var pts=slots[i].s.split(':');
+    var start=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate(),+pts[0],+pts[1]);
+    var end=new Date(start.getTime()+(t.p===0?10:25)*60000);
+    var title=t.p===0?'Recordatorio: '+t.name:'['+t.q.toUpperCase()+'] '+t.name+' Pomodoro';
+    events.push({title:title,start:start,end:end});
   });
-  if(n)toast('Exportando '+n+' pomodoros...');else toast('No hay pomodoros asignados');
+  if(!events.length){toast('No hay eventos asignados en este turno');return;}
+  downloadICS(events,'turno-'+(turn==='m'?'manana':'tarde')+'-'+key);
+  toast('Descargando '+events.length+' eventos .ics');
 }
 
 function wkExportAll(){
-  var dates=wkDates(),tasks=mxSorted(),n=0;
+  var dates=wkDates(),tasks=mxSorted(),events=[];
   dates.forEach(function(dt){
     var key=wkKey(dt);var wd=D.week[key];if(!wd)return;
     ['m','t'].forEach(function(turn){
       if(!wd[turn])return;var arr=turn==='m'?'ms':'ts';var slots=turn==='m'?SM:ST;
       (wd[arr]||[]).forEach(function(tid,i){
         if(!tid)return;var t=tasks.find(function(x){return x.id===tid;});if(!t)return;
-        setTimeout(function(){
-          var pts=slots[i].s.split(':');
-          var start=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate(),+pts[0],+pts[1]);
-          var end=new Date(start.getTime()+25*60000);
-          var fmt=function(d){return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'T'+pad(d.getHours())+pad(d.getMinutes())+'00';};
-          window.open('https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent('['+t.q.toUpperCase()+'] '+t.name+' 🍅')+'&dates='+fmt(start)+'/'+fmt(end),'_blank');
-        },n*600);n++;
+        var pts=slots[i].s.split(':');
+        var start=new Date(dt.getFullYear(),dt.getMonth(),dt.getDate(),+pts[0],+pts[1]);
+        var end=new Date(start.getTime()+(t.p===0?10:25)*60000);
+        var title=t.p===0?'Recordatorio: '+t.name:'['+t.q.toUpperCase()+'] '+t.name+' Pomodoro';
+        events.push({title:title,start:start,end:end});
       });
     });
   });
-  if(n)toast('Exportando '+n+' pomodoros...');else toast('No hay pomodoros planificados');
+  if(!events.length){toast('No hay eventos planificados');return;}
+  downloadICS(events,'semana-planner');
+  toast('Descargando '+events.length+' eventos .ics para importar en Google Calendar');
+}
+
+function downloadICS(events,filename){
+  var lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Planner Tomas//ES','CALSCALE:GREGORIAN','METHOD:PUBLISH'];
+  events.forEach(function(ev){
+    var fmt=function(d){return d.getUTCFullYear()+pad(d.getUTCMonth()+1)+pad(d.getUTCDate())+'T'+pad(d.getUTCHours())+pad(d.getUTCMinutes())+'00Z';};
+    lines.push('BEGIN:VEVENT');
+    lines.push('DTSTART:'+fmt(ev.start));
+    lines.push('DTEND:'+fmt(ev.end));
+    lines.push('SUMMARY:'+ev.title.replace(/,/g,'\\,').replace(/;/g,'\\;'));
+    lines.push('END:VEVENT');
+  });
+  lines.push('END:VCALENDAR');
+  var ics=lines.join('\r\n');
+  var blob=new Blob([ics],{type:'text/calendar;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download=(filename||'planner')+'.ics';
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
 }
 
 // ── POMODORO ──────────────────────────────────────────────
@@ -793,7 +820,7 @@ function dyRender(){
   if(!sorted.length){el.innerHTML='<div style="font-size:13px;color:var(--tx3);padding:20px 0;text-align:center">Agregá tareas en la Matriz</div>';dyStats();return;}
   var cur=new Date();if(cur.getHours()<10)cur.setHours(10,0,0,0);
   el.innerHTML=sorted.map(function(t){
-    var mins=t.p*25+(t.p-1)*5;
+    var mins=t.p===0?10:t.p*25+(t.p-1)*5;
     var sh=pad(cur.getHours())+':'+pad(cur.getMinutes());
     var ec=new Date(cur.getTime()+mins*60000);
     var eh=pad(ec.getHours())+':'+pad(ec.getMinutes());
@@ -810,7 +837,7 @@ function gcalOpen(t,dt,time){
   var pts=(time||t.time||'14:00').split(':');
   var base=dt||new Date();
   var start=new Date(base.getFullYear(),base.getMonth(),base.getDate(),+pts[0],+pts[1]);
-  var mins=t.p*25+(t.p-1)*5;var end=new Date(start.getTime()+mins*60000);
+  var mins=t.p===0?10:t.p*25+(t.p-1)*5;var end=new Date(start.getTime()+mins*60000);
   var fmt=function(d){return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'T'+pad(d.getHours())+pad(d.getMinutes())+'00';};
   window.open('https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent('['+t.q.toUpperCase()+'] '+t.name)+'&dates='+fmt(start)+'/'+fmt(end)+'&details='+encodeURIComponent(t.p+' pomodoros'),'_blank');
 }
@@ -818,8 +845,18 @@ function gcal1(id){var t=D.matrix.find(function(x){return x.id===id;});if(t)gcal
 function exportAll(){
   var pend=mxSorted().filter(function(t){return !t.done;});if(!pend.length){toast('No hay tareas pendientes');return;}
   var cur=new Date();if(cur.getHours()<10)cur.setHours(10,0,0,0);
-  pend.forEach(function(t,i){setTimeout(function(){var mins=t.p*25+(t.p-1)*5;var tc=JSON.parse(JSON.stringify(t));tc.time=pad(cur.getHours())+':'+pad(cur.getMinutes());cur=new Date(cur.getTime()+(mins+10)*60000);gcalOpen(tc);},i*600);});
-  toast('Exportando '+pend.length+' tareas...');
+  var events=[];
+  pend.forEach(function(t){
+    var mins=t.p===0?10:t.p*25+(t.p-1)*5;
+    var pts=(t.time||'14:00').split(':');
+    var start=new Date(cur.getFullYear(),cur.getMonth(),cur.getDate(),+pts[0],+pts[1]);
+    var end=new Date(start.getTime()+mins*60000);
+    var title=t.p===0?'📞 '+t.name:'['+t.q.toUpperCase()+'] '+t.name;
+    events.push({title:title,start:start,end:end});
+    cur=new Date(end.getTime()+10*60000);
+  });
+  downloadICS(events,'mi-dia-planner');
+  toast('Descargando '+events.length+' eventos — importá el .ics en Google Calendar');
 }
 
 // ── SETTINGS ──────────────────────────────────────────────

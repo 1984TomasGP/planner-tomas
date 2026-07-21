@@ -570,7 +570,7 @@ function mxFromBl(){
   if(!t)return;
   var a=t.aid?ga(t.aid):null;
   D.matrix.push({id:uid(),bid:t.id,name:t.name,q:document.getElementById('mod-q').value,p:+document.getElementById('mod-p').value,pd:0,done:false,time:document.getElementById('mod-t').value,ac:a?a.color:'#888'});
-  save();closeMod('mod-mx');blRender();mxRender();toast('Enviada a la matriz');
+  save();closeMod('mod-mx');blRender();mxRender();refreshWkIfVisible();toast('Enviada a la matriz');
 }
 function blDel(id){
   D.backlog=D.backlog.filter(function(x){return x.id!==id;});
@@ -584,7 +584,7 @@ function mxAdd(){
   if(!name)return;
   D.matrix.push({id:uid(),name:name,q:document.getElementById('mx-q').value,p:+document.getElementById('mx-p').value,pd:0,done:false,time:'14:00',ac:'#888'});
   document.getElementById('mx-in').value='';
-  save();mxRender();
+  save();mxRender();refreshWkIfVisible();
 }
 
 function mxSorted(){
@@ -631,7 +631,7 @@ function bindQuads(){
       if(D.matrix.some(function(m){return m.bid===t.id;})){toast('Ya está en la matriz');dragId=null;return;}
       var a=t.aid?ga(t.aid):null;
       D.matrix.push({id:uid(),bid:t.id,name:t.name,q:q,p:1,pd:0,done:false,time:'14:00',ac:a?a.color:'#888'});
-      dragId=null;save();mxRender();blRender();
+      dragId=null;save();mxRender();blRender();refreshWkIfVisible();
       toast('Agregada a '+q.toUpperCase());
     });
   });
@@ -639,7 +639,7 @@ function bindQuads(){
 
 function mxToggle(id){var t=D.matrix.find(function(x){return x.id===id;});if(t){t.done=!t.done;save();mxRender();}}
 function mxQ(id,q){var t=D.matrix.find(function(x){return x.id===id;});if(t){t.q=q;save();mxRender();}}
-function mxDel(id){D.matrix=D.matrix.filter(function(x){return x.id!==id;});save();mxRender();blRender();}
+function mxDel(id){D.matrix=D.matrix.filter(function(x){return x.id!==id;});save();mxRender();blRender();refreshWkIfVisible();}
 
 //  SEMANA
 function wkDates(){var now=new Date(),day=now.getDay(),mon=new Date(now);mon.setDate(now.getDate()-(day===0?6:day-1));mon.setHours(0,0,0,0);var dates=[];for(var i=0;i<5;i++){var d=new Date(mon);d.setDate(mon.getDate()+i);dates.push(d);}return dates;}
@@ -773,13 +773,29 @@ function wkExportAll(){
 }
 
 function downloadICS(events,filename){
-  var lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Planner Tomas//ES','CALSCALE:GREGORIAN','METHOD:PUBLISH'];
-  events.forEach(function(ev){
-    var fmt=function(d){return d.getUTCFullYear()+pad(d.getUTCMonth()+1)+pad(d.getUTCDate())+'T'+pad(d.getUTCHours())+pad(d.getUTCMinutes())+'00Z';};
+  // Usar fecha local sin conversion UTC para que Google Calendar respete el horario
+  var fmtLocal=function(d){
+    return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())
+      +'T'+pad(d.getHours())+pad(d.getMinutes())+'00';
+  };
+  // Obtener timezone del browser (ej: "America/Argentina/Buenos_Aires")
+  var tz='America/Argentina/Buenos_Aires';
+  try { tz=Intl.DateTimeFormat().resolvedOptions().timeZone; } catch(e){}
+
+  var lines=[
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Planner Tomas//ES',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'X-WR-TIMEZONE:'+tz
+  ];
+  events.forEach(function(ev,i){
     lines.push('BEGIN:VEVENT');
-    lines.push('DTSTART:'+fmt(ev.start));
-    lines.push('DTEND:'+fmt(ev.end));
+    lines.push('DTSTART;TZID='+tz+':'+fmtLocal(ev.start));
+    lines.push('DTEND;TZID='+tz+':'+fmtLocal(ev.end));
     lines.push('SUMMARY:'+ev.title.replace(/,/g,'\\,').replace(/;/g,'\\;'));
+    lines.push('UID:planner-'+Date.now()+'-'+i+'@tomas');
     lines.push('END:VEVENT');
   });
   lines.push('END:VCALENDAR');
@@ -929,6 +945,11 @@ var _d=new Date();
 var _days=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 document.getElementById('dchip').textContent=_days[_d.getDay()]+' '+_d.getDate()+' '+MO[_d.getMonth()];
 blRender();mxRender();bindQuads();pmArc();renderPal();
+// Refrescar semana si esta visible
+function refreshWkIfVisible(){
+  if(document.getElementById('v-wk').classList.contains('on')) wkRender();
+}
+
 // Exponer para Firebase
 window.D=D;window.blRender=blRender;window.toast=toast;window.uid=uid;window.save=save;window.mxRender=mxRender;
 </script>

@@ -453,18 +453,17 @@ function blAsgn(){
 
 function cardH(t,a,s){
   var color=a?a.color:'var(--bor2)';
-  var tag=a?'<div style="font-size:11px;padding:2px 7px;border-radius:20px;background:'+hRgba(a.color,.13)+';color:'+a.color+';margin-top:4px;display:inline-block">'+esc(a.name)+(s?' › '+esc(s.name):'')+'</div>':'';
+  var tag=a?'<div style="font-size:11px;padding:2px 7px;border-radius:20px;background:'+hRgba(a.color,.13)+';color:'+a.color+';margin-top:4px;display:inline-block">'+esc(a.name)+(s?' \u203a '+esc(s.name):'')+'</div>':'';
   var inMx=D.matrix.some(function(m){return m.bid===t.id;});
+  var btnMx=inMx?'<span class="inmx">En matriz</span>':'<button class="tomx" onclick="event.stopPropagation();blToMx(\''+t.id+'\')">&#8594; Mx</button>';
+  var btnDel='<button class="dbtn" style="font-size:13px" onclick="event.stopPropagation();blDel(\''+t.id+'\')">&#215;</button>';
   return '<div class="card" draggable="true" data-id="'+t.id+'">'
     +'<div class="cdot" style="background:'+color+';flex-shrink:0;margin-top:3px"></div>'
     +'<div style="flex:1;min-width:0">'
       +'<div style="font-size:13px;font-weight:500;line-height:1.4;word-break:break-word">'+esc(t.name)+'</div>'
       +tag
     +'</div>'
-    +'<div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end;flex-shrink:0">'
-      +(inMx?'<span class="inmx">En matriz</span>':'<button class="tomx" onclick="event.stopPropagation();blToMx(''+t.id+'')">→ Mx</button>')
-      +'<button class="dbtn" style="font-size:13px" onclick="event.stopPropagation();blDel(''+t.id+'')">×</button>'
-    +'</div>'
+    +'<div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end;flex-shrink:0">'+btnMx+btnDel+'</div>'
     +'</div>';
 }
 
